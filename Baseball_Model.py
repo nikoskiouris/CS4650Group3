@@ -42,8 +42,8 @@ def compute_performance_scores(df, article_column, base_performance_score):
 
 # Example usage:
 # Load the team data
-team_data_2010 = load_data('Data\Atlanta Falcons Batting Data 2010.xlsx', 'excel')
-team_data_2020 = load_data('Data\Atlanta Falcons Batting Data 2020.xlsx', 'excel')
+team_data_2010 = load_data('Data/Atlanta Falcons Batting Data 2010.xlsx', 'excel')
+team_data_2020 = load_data('Data/Atlanta Falcons Batting Data 2020.xlsx', 'excel')
 
 # Calculate initial and final performance scores
 initial_score_2010 = calculate_performance_score(team_data_2010, 'r')
