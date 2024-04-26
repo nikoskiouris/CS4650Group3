@@ -11,3 +11,7 @@ python -m nltk.downloader stopwords
 
 pip install openpyxl
 
+pip install requests
+
+pip install beautifulsoup4
+

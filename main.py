@@ -2,8 +2,8 @@ from scraper import load_articles
 from sentiment_analysis import load_data, calculate_performance_score, compute_performance_scores
 
 # Load the team data
-team_data_2010 = load_data('Data/Atlanta Falcons Batting Data 2010.xlsx', 'excel')
-team_data_2020 = load_data('Data/Atlanta Falcons Batting Data 2020.xlsx', 'excel')
+team_data_2010 = load_data('Data/Atlanta Braves Batting Data 2010.xlsx', 'excel')
+team_data_2020 = load_data('Data/Atlanta Braves Batting Data 2020.xlsx', 'excel')
 
 # Calculate initial and final performance scores
 initial_score_2010 = calculate_performance_score(team_data_2010, 'r')
