@@ -15,3 +15,5 @@ pip install openpyxl
 pip install requests beautifulsoup4
 
 pip install transformers torch
+
+pip install transformers
