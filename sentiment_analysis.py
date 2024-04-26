@@ -2,6 +2,7 @@ import pandas as pd
 from textblob import TextBlob
 from nltk.corpus import stopwords
 import re
+from transformers import pipeline
 
 def clean_text(text):
     """Remove punctuation, stopwords, and return lowercase text."""
@@ -10,9 +11,16 @@ def clean_text(text):
     text = ' '.join([word for word in text.split() if word not in stopwords_set])
     return text
 
+def paraphrase_text(text):
+    """Paraphrase the given text using a pre-trained language model."""
+    paraphraser = pipeline("text2text-generation", model="t5-base", tokenizer="t5-base", framework="pt")
+    paraphrased_text = paraphraser(text, max_length=1000, do_sample=True, top_p=0.9, num_return_sequences=1)[0]['generated_text']
+    return paraphrased_text
+
 def analyze_sentiment(text):
     """Return a polarity score for the text."""
-    blob = TextBlob(clean_text(text))
+    paraphrased_text = paraphrase_text(text)
+    blob = TextBlob(clean_text(paraphrased_text))
     return blob.sentiment.polarity
 
 def load_data(file_path, file_type='csv'):
