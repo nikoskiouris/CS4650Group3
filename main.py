@@ -7,10 +7,9 @@ article_urls = [
     'https://www.masslive.com/sports/2010/10/errors_cost_atlanta_braves_gam.html',
     'https://sabr.org/gamesproj/game/august-6-2010-giants-beat-braves-3-2-in-extra-innings-on-tom-glavine-night/',
     'https://www.denverpost.com/2010/08/25/rockies-rally-from-9-run-deficit-to-beat-the-braves-12-10/',
-    'https://www.savannahnow.com/story/sports/2010/08/03/braves-show-new-life-4-1-victory-over-mets/13397175007/',
     'https://www.baseball-reference.com/boxes/ATL/ATL201008280.shtml',
     'https://www.cbsnews.com/losangeles/news/fading-dodgers-fall-to-1st-place-braves-1-0/',
-    # Add more URLs as needed
+    'https://www.savannahnow.com/story/sports/2010/08/03/braves-show-new-life-4-1-victory-over-mets/13397175007/',
 ]
 article_data = load_articles(article_urls)
 
@@ -23,10 +22,6 @@ braves_games, total_runs = get_braves_runs(start_date, end_date, api_key)
 # Calculate the average runs scored by the Braves during the given time period
 avg_runs = total_runs / len(braves_games)
 
-# Predict the number of runs for the Braves' next game after the end date (without sentiment analysis)
-predicted_runs_without_sentiment = round(avg_runs)
-print(f"\nPredicted Runs for the Next Game (without sentiment analysis): {predicted_runs_without_sentiment}")
-
 # Adjust performance score based on sentiment analysis of articles
 adjusted_df = compute_performance_scores(article_data, 'Article', avg_runs)
 
@@ -34,9 +29,20 @@ adjusted_df = compute_performance_scores(article_data, 'Article', avg_runs)
 print("Adjusted Performance Scores:")
 print(adjusted_df[['Title', 'ArticleSentiment', 'AdjustedPerformanceScore']])
 
+# Predict the runs for each game within the time frame
+print(f"\nPredicted Runs for Each Game (from {start_date} to {end_date}):")
+for game in braves_games:
+    game_date = game['date'].strftime('%Y-%m-%d')
+    predicted_runs = max(0, round(game['home_team_runs'] if game['home_team_id'] == 144 else game['away_team_runs']))
+    print(f"Date: {game_date}, Predicted Runs: {predicted_runs}")
+
+# Predict the number of runs for the Braves' next game after the end date (without sentiment analysis)
+predicted_runs_without_sentiment = round(avg_runs)
+print(f"\nPredicted Runs for the Next Game (without sentiment analysis): {predicted_runs_without_sentiment}")
+
 # Predict the number of runs for the Braves' next game after the end date (with sentiment analysis)
-adjusted_score = adjusted_df['AdjustedPerformanceScore'].mean()
-predicted_runs_with_sentiment = max(0, round(adjusted_score))
+sentiment_impact = adjusted_df['ArticleSentiment'].mean() * 0.1  # Adjust the scaling factor
+predicted_runs_with_sentiment = max(0, round(avg_runs + sentiment_impact))
 print(f"Predicted Runs for the Next Game (with sentiment analysis): {predicted_runs_with_sentiment}")
 
 # Get the actual number of runs scored by the Braves in their next game after the end date

@@ -1,20 +1,30 @@
 import pandas as pd
-from textblob import TextBlob
+from transformers import BertTokenizer, BertForSequenceClassification
+import torch
 from nltk.corpus import stopwords
 import re
-from transformers import pipeline
 import os
 import shutil
+import nltk
+from nltk.stem import WordNetLemmatizer
 
-def clean_text(text):
-    """Remove punctuation, stopwords, and return lowercase text."""
+nltk.download('punkt')
+nltk.download('wordnet')
+nltk.download('omw-1.4')
+
+def preprocess_text(text):
+    """Preprocess the text by removing stopwords, punctuation, and lemmatizing words."""
     stopwords_set = set(stopwords.words('english'))
-    text = re.sub(r'[^\w\s]', '', text.lower())
-    text = ' '.join([word for word in text.split() if word not in stopwords_set])
-    return text
+    text = re.sub(r'http\S+', '', text)  # Remove URLs
+    text = re.sub(r'[^\w\s]', '', text.lower())  # Remove punctuation and lowercase
+    words = nltk.word_tokenize(text)
+    lemmatizer = WordNetLemmatizer()
+    words = [lemmatizer.lemmatize(word) for word in words if word not in stopwords_set]
+    return ' '.join(words)
 
 def paraphrase_text(text, article_index):
     """Paraphrase the given text using a pre-trained language model."""
+    from transformers import pipeline
     paraphraser = pipeline("text2text-generation", model="t5-base", tokenizer="t5-base", framework="pt")
     paraphrased_text = paraphraser(text, max_length=1000, do_sample=True, top_p=0.9, num_return_sequences=1)[0]['generated_text']
     
@@ -28,10 +38,25 @@ def paraphrase_text(text, article_index):
     return paraphrased_text
 
 def analyze_sentiment(text, article_index):
-    """Return a polarity score for the text."""
+    """Return a polarity score for the text using BERT."""
     paraphrased_text = paraphrase_text(text, article_index)
-    blob = TextBlob(clean_text(paraphrased_text))
-    return blob.sentiment.polarity
+    
+    # Load the pre-trained BERT model and tokenizer
+    model_name = 'bert-base-uncased'
+    tokenizer = BertTokenizer.from_pretrained(model_name)
+    model = BertForSequenceClassification.from_pretrained(model_name, num_labels=2)
+    
+    # Tokenize the input text
+    inputs = tokenizer(preprocess_text(paraphrased_text), padding=True, truncation=True, return_tensors='pt')
+    
+    # Perform sentiment analysis
+    with torch.no_grad():
+        outputs = model(**inputs)
+        probabilities = torch.softmax(outputs.logits, dim=1)
+        positive_prob = probabilities[0][1].item()
+    
+    polarity = positive_prob * 2 - 1  # Convert probability to polarity score in the range [-1, 1]
+    return polarity
 
 def load_data(file_path, file_type='csv'):
     """Load baseball data from a file."""
@@ -49,7 +74,6 @@ def calculate_performance_score(df, runs_column='r'):
 
 def compute_performance_scores(df, article_column, base_performance_score):
     """Add/subtract scores based on sentiment analysis of articles."""
-    
     # Clear the output folder
     output_folder = "Articles Paraphrased"
     if os.path.exists(output_folder):
